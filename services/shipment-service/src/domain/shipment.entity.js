@@ -16,10 +16,9 @@ const VALID_SHIPMENT_STATUSES = [
 ];
 
 class Shipment {
-  constructor({ shipid, oid, uid = 0, status = 'PENDING', tracking = [] }) {
+  constructor({ shipid, oid, status = 'PENDING', tracking = [] }) {
     this.shipid = Number(shipid);
     this.oid = Number(oid);
-    this.uid = Number(uid) || 0;
     this.status = status;
     this.tracking = tracking;
   }

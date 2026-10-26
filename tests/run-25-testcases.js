@@ -304,7 +304,7 @@ async function runSuite() {
       assert.strictEqual(res.data.items.length, 1);
       assert.strictEqual(res.data.items[0].unit_price, 400);
       createdOid = res.data.oid;
-      return `201 Created (oid=${createdOid}, discount=${res.data.discount}, total=${res.data.total_amount})`;
+      return `201 Created (oid=${createdOid}, discount=${res.data.discount})`;
     });
 
     await runCase('TC-ORD-02', 'Order Management', 'Tạo Order không có JWT', async () => {
@@ -325,15 +325,14 @@ async function runSuite() {
     });
 
     await runCase('TC-ORD-04', 'Order Management', 'Tính discount theo score thành viên', async () => {
-      // Bob (uid=4, Gold score=500 -> 10% discount) buys 1x Monitor ($400) => discount=$40, total=$360
+      // Bob (uid=4, Gold score=500 -> 10% discount) buys 1x Monitor ($400) => discount=$40
       const res = await request(baseUrl, 'POST', '/api/orders', {
         token: goldToken,
         body: { items: [{ pid: createdPid, qty: 1 }] }
       });
       assert.strictEqual(res.status, 201);
       assert.strictEqual(res.data.discount, 40);
-      assert.strictEqual(res.data.total_amount, 360);
-      return `201 Created (Gold score=500 -> 10%: subtotal=400, discount=${res.data.discount}, total=${res.data.total_amount})`;
+      return `201 Created (Gold score=500 -> 10%: subtotal=400, discount=${res.data.discount})`;
     });
 
     await runCase('TC-ORD-05', 'Order Management', 'Tạo Order và phát sự kiện OrderCreated vào Kafka', async () => {

@@ -21,6 +21,9 @@ class MongoShipmentRepository {
     await this.shipments.createIndex({ oid: 1 }, { unique: true });
     await this.trackings.createIndex({ shipid: 1, timestamp: 1 });
 
+    // Remove legacy non-ERD fields if any exist from previous runs
+    await this.shipments.updateMany({}, { $unset: { uid: '', createdAt: '', updatedAt: '' } });
+
     const maxDoc = await this.shipments.find().sort({ shipid: -1 }).limit(1).toArray();
     const maxId = maxDoc[0] ? maxDoc[0].shipid : 5000;
     await this.counters.updateOne(
@@ -46,7 +49,6 @@ class MongoShipmentRepository {
     return new Shipment({
       shipid: doc.shipid,
       oid: doc.oid,
-      uid: doc.uid || 0,
       status: doc.status,
       tracking: logs.map((t) => ({
         status: t.status,
@@ -75,7 +77,7 @@ class MongoShipmentRepository {
     return results;
   }
 
-  async createShipment({ oid, uid, status = 'PENDING', note = '' }) {
+  async createShipment({ oid, status = 'PENDING', note = '' }) {
     const existing = await this.findByOid(oid);
     if (existing) return existing;
 
@@ -85,10 +87,7 @@ class MongoShipmentRepository {
       await this.shipments.insertOne({
         shipid,
         oid: Number(oid),
-        uid: Number(uid) || 0,
-        status,
-        createdAt: now,
-        updatedAt: now
+        status
       });
       await this.trackings.insertOne({
         shipid,
@@ -114,7 +113,7 @@ class MongoShipmentRepository {
 
     await this.shipments.updateOne(
       { shipid: Number(shipid) },
-      { $set: { status, updatedAt: now } }
+      { $set: { status } }
     );
     await this.trackings.insertOne({
       shipid: Number(shipid),
@@ -155,7 +154,6 @@ class InMemoryShipmentRepository {
     return new Shipment({
       shipid: s.shipid,
       oid: s.oid,
-      uid: s.uid,
       status: s.status,
       tracking: logs.map((t) => ({ status: t.status, note: t.note, timestamp: t.timestamp }))
     });
@@ -175,13 +173,13 @@ class InMemoryShipmentRepository {
     return [...this.shipments].sort((a, b) => b.shipid - a.shipid).map((s) => this._hydrate(s));
   }
 
-  async createShipment({ oid, uid, status = 'PENDING', note = '' }) {
+  async createShipment({ oid, status = 'PENDING', note = '' }) {
     const existing = await this.findByOid(oid);
     if (existing) return existing;
 
     const shipid = this.nextShipId++;
     const now = new Date().toISOString();
-    this.shipments.push({ shipid, oid: Number(oid), uid: Number(uid) || 0, status, createdAt: now, updatedAt: now });
+    this.shipments.push({ shipid, oid: Number(oid), status });
     this.trackings.push({ shipid, oid: Number(oid), status, note, timestamp: now });
     return this.findByShipId(shipid);
   }
@@ -191,7 +189,6 @@ class InMemoryShipmentRepository {
     if (!target) return null;
     const now = new Date().toISOString();
     target.status = status;
-    target.updatedAt = now;
     this.trackings.push({ shipid: target.shipid, oid: target.oid, status, note, timestamp: now });
     return this.findByShipId(shipid);
   }

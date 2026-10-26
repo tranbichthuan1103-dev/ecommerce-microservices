@@ -39,9 +39,8 @@ message TrackingEntry {
 message ShipmentResponse {
   int32 shipid = 1;
   int32 oid = 2;
-  int32 uid = 3;
-  string status = 4;
-  repeated TrackingEntry tracking = 5;
+  string status = 3;
+  repeated TrackingEntry tracking = 4;
 }
 
 message ShipmentListResponse {

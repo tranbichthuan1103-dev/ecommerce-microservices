@@ -12,11 +12,15 @@ class PostgresOrderRepository {
       CREATE TABLE IF NOT EXISTS orders (
         oid SERIAL PRIMARY KEY,
         uid INT NOT NULL,
-        discount NUMERIC(10, 2) NOT NULL DEFAULT 0,
-        total_amount NUMERIC(10, 2) NOT NULL DEFAULT 0,
-        status VARCHAR(30) NOT NULL DEFAULT 'CREATED',
-        createat TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        discount NUMERIC(10, 2) NOT NULL DEFAULT 0
       );
+    `);
+
+    await this.pool.query(`
+      ALTER TABLE orders
+        DROP COLUMN IF EXISTS total_amount,
+        DROP COLUMN IF EXISTS status,
+        DROP COLUMN IF EXISTS createat;
     `);
 
     await this.pool.query(`
@@ -49,16 +53,16 @@ class PostgresOrderRepository {
     `);
   }
 
-  async createOrderWithOutbox({ uid, discount, total_amount, items }) {
+  async createOrderWithOutbox({ uid, discount, items }) {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
 
       const orderRes = await client.query(
-        `INSERT INTO orders (uid, discount, total_amount, status)
-         VALUES ($1, $2, $3, 'CREATED')
-         RETURNING oid, uid, discount, total_amount, status, createat`,
-        [uid, discount, total_amount]
+        `INSERT INTO orders (uid, discount)
+         VALUES ($1, $2)
+         RETURNING oid, uid, discount`,
+        [uid, discount]
       );
       const orderRow = orderRes.rows[0];
       const oid = orderRow.oid;
@@ -80,7 +84,6 @@ class PostgresOrderRepository {
           oid,
           uid: Number(uid),
           discount: Number(discount),
-          total_amount: Number(total_amount),
           items: items.map((i) => ({
             pid: Number(i.pid),
             qty: Number(i.qty),
@@ -101,10 +104,7 @@ class PostgresOrderRepository {
         oid,
         uid: orderRow.uid,
         discount: Number(orderRow.discount),
-        total_amount: Number(orderRow.total_amount),
-        items,
-        status: orderRow.status,
-        created_at: new Date(orderRow.createat).toISOString()
+        items
       });
     } catch (err) {
       await client.query('ROLLBACK');
@@ -116,7 +116,7 @@ class PostgresOrderRepository {
 
   async findByOid(oid) {
     const orderRes = await this.pool.query(
-      `SELECT oid, uid, discount, total_amount, status, createat FROM orders WHERE oid = $1`,
+      `SELECT oid, uid, discount FROM orders WHERE oid = $1`,
       [Number(oid)]
     );
     if (!orderRes.rows[0]) return null;
@@ -129,10 +129,7 @@ class PostgresOrderRepository {
       oid: o.oid,
       uid: o.uid,
       discount: Number(o.discount),
-      total_amount: Number(o.total_amount),
-      items: detailRes.rows,
-      status: o.status,
-      created_at: new Date(o.createat).toISOString()
+      items: detailRes.rows
     });
   }
 
@@ -197,17 +194,14 @@ class InMemoryOrderRepository {
     this.nextOid = 1001;
   }
 
-  async createOrderWithOutbox({ uid, discount, total_amount, items }) {
+  async createOrderWithOutbox({ uid, discount, items }) {
     const oid = this.nextOid++;
     const createdAt = new Date().toISOString();
     const order = new Order({
       oid,
       uid,
       discount,
-      total_amount,
-      items,
-      status: 'CREATED',
-      created_at: createdAt
+      items
     });
     this.orders.push(order);
 
@@ -220,7 +214,6 @@ class InMemoryOrderRepository {
         oid,
         uid: Number(uid),
         discount: Number(discount),
-        total_amount: Number(total_amount),
         items: order.items
       }
     };

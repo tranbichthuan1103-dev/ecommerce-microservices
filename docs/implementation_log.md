@@ -383,3 +383,27 @@
 - Trạng thái `docker ps`: **13/13 containers `Up`**, toàn bộ healthchecks (`api-gateway`, 3 `postgres-*`, 2 `mongo-*`, `redis-gateway`, `kafka`) đều đạt **`(healthy)`**.
 - Kết quả chạy `node tests/run-25-testcases.js --live`: **`SUMMARY: 25/25 TEST CASES PASSED`** trên cơ sở dữ liệu PostgreSQL, MongoDB, Redis và Apache Kafka thật.
 - **Trạng thái kiểm chứng thực tế:** **ĐẠT TUYỆT ĐỐI (100% LIVE DOCKER VERIFIED)**
+
+
+---
+
+## Bước 12: Chuẩn hóa các Thuộc tính (Field) của các Bảng theo đúng ERD (`ERD.jpg` & `Bounded-Context.jpg`)
+
+### 1. Diễn giải công việc đã thực hiện
+- Rà soát đối chiếu toàn bộ các bảng/collection, Domain Entities, hợp đồng `.proto`, API Gateway và tài liệu với sơ đồ gốc `docs/ERD.jpg` và `docs/Bounded-Context.jpg`:
+  1. **Bảng `users` (`User` trong `auth-service`):**
+     - Lược bỏ `email` và `phone` không có trong ERD; chỉ giữ đúng 4 thuộc tính gốc (`uid`, `username`, `password`, `roleid`), kèm migration tự động `ALTER TABLE users DROP COLUMN IF EXISTS email, DROP COLUMN IF EXISTS phone`.
+     - Tinh gọn `RegisterRequest` trong `proto/auth.proto` (`username`, `password`, `role`).
+  2. **Bảng `orders` (`Order` trong `order-service`):**
+     - Lược bỏ `total_amount`, `status`, `createat` không có trong `ERD.jpg` / `Bounded-Context.jpg`; chỉ giữ đúng 3 thuộc tính gốc (`oid`, `uid`, `discount`), kèm migration tự động `ALTER TABLE orders DROP COLUMN IF EXISTS total_amount, DROP COLUMN IF EXISTS status, DROP COLUMN IF EXISTS createat`.
+     - Tinh gọn `OrderResponse` trong `proto/order.proto` (`oid`, `uid`, `discount`, `items`).
+  3. **Collection `shipments` (`Shipment` trong `shipment-service`):**
+     - Lược bỏ `uid`, `createdAt`, `updatedAt` trên `shipments`; chỉ giữ đúng 3 thuộc tính gốc (`shipid`, `oid`, `status`), kèm lệnh dọn `$unset` cho dữ liệu cũ.
+     - Tinh gọn `ShipmentResponse` trong `proto/shipment.proto` (`shipid`, `oid`, `status`, `tracking`), đồng thời chuyển kiểm tra quyền sở hữu đơn hàng của `customer` tại `api-gateway` qua truy vấn `OrderService.GetOrder(oid)`.
+  4. **Hiệu chỉnh tài liệu & bộ kiểm thử:**
+     - Cập nhật `docs/ERD.md` sửa trường `createat` của bảng `Order` thành `discount DECIMAL(10,2)` khớp chính xác với ảnh thiết kế `docs/ERD.jpg`.
+     - Đồng bộ `tests/run-25-testcases.js`, `docs/Ecommerce_MVP_25_TestCases.postman_collection.json`, `docs/huong_dan_tung_buoc.md` và `docs/huong_dan_postman_25_testcases.md`.
+
+### 2. Đánh giá khách quan
+- Toàn bộ các bảng miền chính (`roles`, `users`, `customers`, `memberships`, `products`, `orders`, `order_details`, `shipments`) hiện khớp 100% từng thuộc tính với `ERD.jpg` và `Bounded-Context.jpg`, đồng thời giữ vững ranh giới 5 Bounded Contexts cùng các thành phần kiến trúc (`inventories`, `trackings`, `outbox_events`).
+- **Kết quả kiểm thử tự động:** `node tests/run-25-testcases.js` đạt **25/25 TEST CASES PASSED**.

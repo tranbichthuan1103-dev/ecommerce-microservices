@@ -265,7 +265,7 @@ Cơ sở dữ liệu In-Memory đóng vai trò bộ nhớ đệm tốc độ cao
   - Gọi Product Service qua **gRPC** để kiểm tra giá và trừ tồn kho.
   - Xuất sự kiện `order-created` sang **Kafka**.
 - **Cơ sở dữ liệu:** `PostgreSQL (Order DB)`.
-  - Bảng `Order`: Lưu thông tin tổng quát đơn hàng (`oid`, `uid`, `discount`, `created_at`).
+  - Bảng `Order`: Lưu thông tin tổng quát đơn hàng (`oid`, `uid`, `discount`).
   - Bảng `OrderDetail`: Lưu chi tiết các mặt hàng (`oid`, `pid`, `qty`, `unit_price`).
 
 #### 4. Product Service

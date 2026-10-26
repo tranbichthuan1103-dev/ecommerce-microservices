@@ -19,13 +19,12 @@ class OrderUseCase {
     const reservation = await this.downstreamClients.reserveInventory(normalizedItems);
     const reservedItems = reservation.items || [];
 
-    // 4. Calculate subtotal, membership discount, and final total_amount
+    // 4. Calculate subtotal and membership discount
     const subtotal = reservedItems.reduce(
       (sum, item) => sum + Number(item.qty) * Number(item.unit_price),
       0
     );
     const discount = DiscountPolicy.calculate(subtotal, score);
-    const totalAmount = Number(Math.max(0, subtotal - discount).toFixed(2));
 
     // 5. Persist Order + OrderDetail + OutboxEvent in single ACID transaction
     let createdOrder;
@@ -33,7 +32,6 @@ class OrderUseCase {
       createdOrder = await this.orderRepository.createOrderWithOutbox({
         uid: Number(uid),
         discount,
-        total_amount: totalAmount,
         items: reservedItems.map((r) => ({
           pid: r.pid,
           qty: r.qty,

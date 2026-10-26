@@ -29,18 +29,15 @@ class DiscountPolicy {
 }
 
 class Order {
-  constructor({ oid = null, uid, discount = 0, total_amount = 0, items = [], status = 'CREATED', created_at = null }) {
+  constructor({ oid = null, uid, discount = 0, items = [] }) {
     this.oid = oid ? Number(oid) : null;
     this.uid = Number(uid);
     this.discount = Number(discount);
-    this.total_amount = Number(total_amount);
     this.items = items.map((i) => ({
       pid: Number(i.pid),
       qty: Number(i.qty),
       unit_price: Number(i.unit_price)
     }));
-    this.status = status;
-    this.created_at = created_at || new Date().toISOString();
   }
 
   static normalizeAndValidateInput({ uid, items }) {

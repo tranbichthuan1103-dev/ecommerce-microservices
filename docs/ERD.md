@@ -38,7 +38,7 @@ erDiagram
     Order {
         INT oid PK "Khóa chính"
         INT uid FK "Khóa ngoại -> User(uid)"
-        DATETIME createat "Thời gian tạo đơn"
+        DECIMAL discount "DECIMAL(10,2) Chiết khấu"
     }
 
     Shipment {
@@ -102,7 +102,7 @@ Lưu trữ thông tin đơn hàng do người dùng tạo.
 | :--- | :--- | :---: | :---: | :--- |
 | `oid` | INT | **PK** | Không | Mã đơn hàng (Primary Key) |
 | `uid` | INT | **FK** | Không | Khóa ngoại tham chiếu `User(uid)` |
-| `createat` | DATETIME | | Không | Thời gian đặt hàng (mặc định lấy thời gian hiện hành) |
+| `discount` | DECIMAL(10,2) | | Không | Giá trị tiền giảm trừ áp dụng cho đơn hàng |
 
 ### 2.5. Bảng `Shipment`
 Quản lý thông tin giao vận và trạng thái đơn hàng.

@@ -61,13 +61,10 @@ function createApiRouter({ grpcClients, redisStore, authMiddlewares, cacheTtlSec
   // =========================================================================
   router.post('/auth/register', async (req, res) => {
     try {
-      const { username, password, fullname, email, phone } = req.body || {};
+      const { username, password, fullname } = req.body || {};
       const authResult = await grpcClients.auth.Register({
         username: username || '',
         password: password || '',
-        fullname: fullname || '',
-        email: email || '',
-        phone: phone || '',
         role: 'customer'
       });
 
@@ -404,10 +401,7 @@ function createApiRouter({ grpcClients, redisStore, authMiddlewares, cacheTtlSec
         oid: order.oid,
         uid: order.uid,
         discount: order.discount,
-        total_amount: order.total_amount,
         items: order.items,
-        status: order.status,
-        created_at: order.created_at,
         shipment: shipmentInfo
       });
     } catch (err) {
@@ -471,11 +465,24 @@ function createApiRouter({ grpcClients, redisStore, authMiddlewares, cacheTtlSec
     }
   });
 
+  const verifyCustomerOrderOwnership = async (oid, uid) => {
+    try {
+      const order = await grpcClients.order.GetOrder({ oid: Number(oid) });
+      return !order || order.uid === uid;
+    } catch (err) {
+      if (err && err.code === 5) return true;
+      throw err;
+    }
+  };
+
   router.get('/shipments/order/:oid', authenticate, async (req, res) => {
     try {
       const shipment = await grpcClients.shipment.GetShipmentByOrder({ oid: Number(req.params.oid) });
-      if (req.user.role === 'customer' && shipment.uid > 0 && shipment.uid !== req.user.uid) {
-        return res.status(403).json({ error: 'Forbidden', message: 'You can only view shipments for your own orders' });
+      if (req.user.role === 'customer') {
+        const allowed = await verifyCustomerOrderOwnership(shipment.oid, req.user.uid);
+        if (!allowed) {
+          return res.status(403).json({ error: 'Forbidden', message: 'You can only view shipments for your own orders' });
+        }
       }
       return res.status(200).json(shipment);
     } catch (err) {
@@ -486,8 +493,11 @@ function createApiRouter({ grpcClients, redisStore, authMiddlewares, cacheTtlSec
   router.get('/shipments/:shipid', authenticate, async (req, res) => {
     try {
       const shipment = await grpcClients.shipment.GetShipment({ shipid: Number(req.params.shipid) });
-      if (req.user.role === 'customer' && shipment.uid > 0 && shipment.uid !== req.user.uid) {
-        return res.status(403).json({ error: 'Forbidden', message: 'You can only view shipments for your own orders' });
+      if (req.user.role === 'customer') {
+        const allowed = await verifyCustomerOrderOwnership(shipment.oid, req.user.uid);
+        if (!allowed) {
+          return res.status(403).json({ error: 'Forbidden', message: 'You can only view shipments for your own orders' });
+        }
       }
       return res.status(200).json(shipment);
     } catch (err) {

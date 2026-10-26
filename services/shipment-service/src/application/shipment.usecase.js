@@ -21,7 +21,6 @@ class ShipmentUseCase {
 
     const eventData = parsed && parsed.data ? parsed.data : parsed;
     const oid = eventData && eventData.oid !== undefined ? Number(eventData.oid) : NaN;
-    const uid = eventData && eventData.uid !== undefined ? Number(eventData.uid) : 0;
 
     // TC-SHP-02: Event missing oid -> Do not create Shipment, log error
     if (!oid || Number.isNaN(oid) || oid <= 0) {
@@ -45,7 +44,6 @@ class ShipmentUseCase {
     // TC-SHP-01: Create Shipment with initial status PENDING + Tracking record
     const created = await this.shipmentRepository.createShipment({
       oid,
-      uid,
       status: 'PENDING',
       note: 'Shipment initialized from OrderCreated event'
     });

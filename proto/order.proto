@@ -56,10 +56,7 @@ message OrderResponse {
   int32 oid = 1;
   int32 uid = 2;
   double discount = 3;
-  double total_amount = 4;
-  repeated OrderDetailInfo items = 5;
-  string status = 6;
-  string created_at = 7;
+  repeated OrderDetailInfo items = 4;
 }
 
 message OrderListResponse {

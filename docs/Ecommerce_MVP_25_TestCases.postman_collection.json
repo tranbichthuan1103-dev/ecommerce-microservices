@@ -593,11 +593,10 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('TC-ORD-04: Tính đúng discount 10% cho Gold score=500 (500 -> giảm 50, còn 450)', function () {",
+                  "pm.test('TC-ORD-04: Tính đúng discount 10% cho Gold score=500 (500 -> giảm 50)', function () {",
                   "    pm.response.to.have.status(201);",
                   "    var json = pm.response.json();",
                   "    pm.expect(json.discount).to.eql(50);",
-                  "    pm.expect(json.total_amount).to.eql(450);",
                   "});"
                 ]
               }

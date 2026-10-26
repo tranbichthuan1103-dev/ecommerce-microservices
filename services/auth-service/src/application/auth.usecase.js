@@ -9,23 +9,14 @@ class AuthUseCase {
     this.jwtExpiresIn = Number(jwtExpiresIn) || 3600;
   }
 
-  async register({ username, password, email, phone, role }) {
+  async register({ username, password, role }) {
     User.validateRegistration({ username, password });
 
     const cleanUsername = username.trim();
-    const cleanEmail = email && email.trim() ? email.trim() : null;
-    const cleanPhone = phone && phone.trim() ? phone.trim() : null;
 
     const existingUser = await this.userRepository.findByUsername(cleanUsername);
     if (existingUser) {
       throw new DomainError('ALREADY_EXISTS', `Username '${cleanUsername}' already exists`);
-    }
-
-    if (cleanEmail) {
-      const existingEmail = await this.userRepository.findByEmail(cleanEmail);
-      if (existingEmail) {
-        throw new DomainError('ALREADY_EXISTS', `Email '${cleanEmail}' already exists`);
-      }
     }
 
     const roleName = role && ['admin', 'customer', 'staff'].includes(role.toLowerCase())
@@ -39,9 +30,7 @@ class AuthUseCase {
       username: cleanUsername,
       password: hashedPassword,
       roleid,
-      rolename: roleName,
-      email: cleanEmail,
-      phone: cleanPhone
+      rolename: roleName
     });
 
     const created = await this.userRepository.create(newUser);

@@ -212,7 +212,7 @@ Tạo 1 tab `POST http://localhost:3000/api/auth/login` (Tab **Body** $\rightarr
     ]
   }
   ```
-- **Kết quả đạt:** Status **`201 Created`** — Kiểm tra JSON trả về thấy rõ: `"discount": 50` (10% của 500) và `"total_amount": 450`.
+- **Kết quả đạt:** Status **`201 Created`** — Kiểm tra JSON trả về thấy rõ: `"discount": 50` (10% của 500).
 
 #### 20. `TC-ORD-05` — Tạo Order và phát sự kiện `OrderCreated` vào Kafka
 - **Method & URL:** `POST http://localhost:3000/api/orders`

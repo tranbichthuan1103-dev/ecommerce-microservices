@@ -7,14 +7,12 @@ class DomainError extends Error {
 }
 
 class User {
-  constructor({ uid = null, username, password, roleid = 2, rolename = 'customer', email = null, phone = null }) {
+  constructor({ uid = null, username, password, roleid = 2, rolename = 'customer' }) {
     this.uid = uid;
     this.username = username;
     this.password = password;
     this.roleid = roleid;
     this.rolename = rolename;
-    this.email = email || null;
-    this.phone = phone || null;
   }
 
   static validateRegistration({ username, password }) {

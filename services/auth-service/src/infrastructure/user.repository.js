@@ -15,36 +15,28 @@ async function buildSeedUsers() {
       username: 'admin',
       password: await bcrypt.hash('Admin@123', 10),
       roleid: 1,
-      rolename: 'admin',
-      email: 'admin@ecommerce.local',
-      phone: '0900000001'
+      rolename: 'admin'
     },
     {
       uid: 2,
       username: 'staff',
       password: await bcrypt.hash('Staff@123', 10),
       roleid: 3,
-      rolename: 'staff',
-      email: 'staff@ecommerce.local',
-      phone: '0900000002'
+      rolename: 'staff'
     },
     {
       uid: 3,
       username: 'alice',
       password: await bcrypt.hash('Pass@123', 10),
       roleid: 2,
-      rolename: 'customer',
-      email: 'alice@ecommerce.local',
-      phone: '0900000003'
+      rolename: 'customer'
     },
     {
       uid: 4,
       username: 'bob',
       password: await bcrypt.hash('Pass@123', 10),
       roleid: 2,
-      rolename: 'customer',
-      email: 'bob@ecommerce.local',
-      phone: '0900000004'
+      rolename: 'customer'
     }
   ];
 }
@@ -67,10 +59,14 @@ class PostgresUserRepository {
         uid SERIAL PRIMARY KEY,
         username VARCHAR(50) NOT NULL UNIQUE,
         password VARCHAR(255) NOT NULL,
-        email VARCHAR(100) UNIQUE,
-        phone VARCHAR(20),
         roleid INT NOT NULL REFERENCES roles(roleid)
       );
+    `);
+
+    await this.pool.query(`
+      ALTER TABLE users
+        DROP COLUMN IF EXISTS email,
+        DROP COLUMN IF EXISTS phone;
     `);
 
     for (const r of DEFAULT_ROLES) {
@@ -83,10 +79,10 @@ class PostgresUserRepository {
     const seedUsers = await buildSeedUsers();
     for (const u of seedUsers) {
       await this.pool.query(
-        `INSERT INTO users (uid, username, password, email, phone, roleid)
-         VALUES ($1, $2, $3, $4, $5, $6)
+        `INSERT INTO users (uid, username, password, roleid)
+         VALUES ($1, $2, $3, $4)
          ON CONFLICT (uid) DO NOTHING`,
-        [u.uid, u.username, u.password, u.email, u.phone, u.roleid]
+        [u.uid, u.username, u.password, u.roleid]
       );
     }
 
@@ -102,7 +98,7 @@ class PostgresUserRepository {
 
   async findByUsername(username) {
     const res = await this.pool.query(
-      `SELECT u.uid, u.username, u.password, u.email, u.phone, u.roleid, r.rolename
+      `SELECT u.uid, u.username, u.password, u.roleid, r.rolename
        FROM users u
        JOIN roles r ON u.roleid = r.roleid
        WHERE u.username = $1`,
@@ -111,23 +107,12 @@ class PostgresUserRepository {
     return res.rows[0] ? new User(res.rows[0]) : null;
   }
 
-  async findByEmail(email) {
-    const res = await this.pool.query(
-      `SELECT u.uid, u.username, u.password, u.email, u.phone, u.roleid, r.rolename
-       FROM users u
-       JOIN roles r ON u.roleid = r.roleid
-       WHERE u.email = $1`,
-      [email]
-    );
-    return res.rows[0] ? new User(res.rows[0]) : null;
-  }
-
   async create(user) {
     const res = await this.pool.query(
-      `INSERT INTO users (username, password, email, phone, roleid)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING uid, username, password, email, phone, roleid`,
-      [user.username, user.password, user.email, user.phone, user.roleid]
+      `INSERT INTO users (username, password, roleid)
+       VALUES ($1, $2, $3)
+       RETURNING uid, username, password, roleid`,
+      [user.username, user.password, user.roleid]
     );
     const row = res.rows[0];
     return new User({ ...row, rolename: user.rolename });
@@ -162,10 +147,6 @@ class InMemoryUserRepository {
 
   async findByUsername(username) {
     return this.users.find((u) => u.username === username) || null;
-  }
-
-  async findByEmail(email) {
-    return this.users.find((u) => u.email && u.email === email) || null;
   }
 
   async create(user) {

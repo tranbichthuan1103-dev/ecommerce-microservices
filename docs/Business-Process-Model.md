@@ -113,7 +113,7 @@ sequenceDiagram
     Ship-->>-Kafka: ack
 
     %% Bước 10: Trả kết quả cho Customer
-    GW-->>-Client: 10. Trả kết quả: 201 Created { oid, discount, total_amount, ... }
+    GW-->>-Client: 10. Trả kết quả: 201 Created { oid, uid, discount, items, shipment }
 ```
 
 > [!NOTE]
@@ -248,8 +248,7 @@ sequenceDiagram
         "items": [
           { "pid": 101, "qty": 2, "unit_price": 150.00 }
         ],
-        "discount": 15.00,
-        "total_amount": 285.00
+        "discount": 15.00
       }
     }
     ```
@@ -276,7 +275,6 @@ sequenceDiagram
       "oid": 1001,
       "uid": 42,
       "discount": 15.00,
-      "total_amount": 285.00,
       "items": [
         {
           "pid": 101,
@@ -284,8 +282,10 @@ sequenceDiagram
           "unit_price": 150.00
         }
       ],
-      "status": "CREATED",
-      "shipment_status": "PENDING"
+      "shipment": {
+        "shipid": 5001,
+        "status": "PENDING"
+      }
     }
   }
   ```

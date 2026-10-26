@@ -60,7 +60,7 @@ p3/
 
 ### 1.3. Giải thích chi tiết 5 file `.proto` (Phục vụ câu hỏi số 1 trong Phiếu Chấm)
 - **`proto/auth.proto` (`package auth`)**:
-  - `Register`: Nhận `username`, `password`, `fullname`, `email`, `phone` $\rightarrow$ Trả về `uid` mới tạo.
+  - `Register`: Nhận `username`, `password`, `role` $\rightarrow$ Trả về `uid` mới tạo.
   - `Login`: Nhận `username`, `password` $\rightarrow$ Xác thực bcrypt và trả về `access_token` (JWT), `expires_in`, `role`.
   - `VerifyToken`: Cho phép kiểm tra chữ ký và trích xuất `uid`, `role` từ JWT.
 - **`proto/customer.proto` (`package customer`)**:
@@ -72,7 +72,7 @@ p3/
   - `ReserveInventory`: Được `Order Service` gọi khi khách đặt hàng để kiểm tra `qty <= quantity` và trừ tồn kho nguyên tử.
   - `ReleaseInventory`: Hoàn lại tồn kho (cơ chế bù trừ *Saga Compensation*) nếu bước lưu đơn hàng phía sau gặp sự cố.
 - **`proto/order.proto` (`package order`)**:
-  - `CreateOrder`: Nhận `uid` và danh sách `items [{pid, qty}]` $\rightarrow$ Trả về đơn hàng kèm `discount`, `total_amount` và chi tiết `OrderDetail`.
+  - `CreateOrder`: Nhận `uid` và danh sách `items [{pid, qty}]` $\rightarrow$ Trả về đơn hàng (`oid`, `uid`, `discount`) và chi tiết `OrderDetail`.
   - `GetOrder`, `ListOrders`: Xem chi tiết đơn hàng hoặc danh sách đơn hàng.
 - **`proto/shipment.proto` (`package shipment`)**:
   - `GetShipment`, `GetShipmentByOrder`, `ListShipments`: Tra cứu thông tin vận đơn và lịch sử hành trình (`tracking`).
@@ -92,7 +92,7 @@ npm.cmd install
 
 ### 2.1. Diễn giải mức cơ bản
 `auth-service` chịu trách nhiệm trả lời 2 câu hỏi: *"Bạn là ai?"* (**Authentication**) và *"Bạn có vai trò gì?"* (**Role**).
-- **CSDL riêng:** `PostgreSQL (auth_db)` gồm 2 bảng `roles` (`admin`, `customer`, `staff`) và `users` (`uid`, `username`, `password`, `email`, `phone`, `roleid`).
+- **CSDL riêng:** `PostgreSQL (auth_db)` gồm 2 bảng `roles` (`admin`, `customer`, `staff`) và `users` (`uid`, `username`, `password`, `roleid`).
 - **Quy trình bảo mật mật khẩu:** Khi người dùng đăng ký, mật khẩu tuyệt đối không lưu thô mà được băm một chiều qua thuật toán `bcrypt` (10 vòng lặp muối *salt*).
 - **Cấp phát thẻ thông hành JWT:** Khi đăng nhập đúng, service ký một chuỗi **JSON Web Token (JWT)** chứa `{ sub: uid, uid, username, role }` có hạn 3600 giây.
 
