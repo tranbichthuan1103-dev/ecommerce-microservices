@@ -1,0 +1,821 @@
+{
+  "info": {
+    "name": "E-Commerce Microservices MVP - 25 Test Cases (5 Bounded Contexts)",
+    "_postman_id": "a1b2c3d4-e5f6-4a7b-8c9d-25testcases00",
+    "description": "Bộ 25 Test Cases chuẩn cho 5 Bounded Contexts (Identity & Access, Customer & Membership, Product Catalog, Order Management, Shipment) kèm kiểm tra Health Check.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "test_username", "value": "sv_postman_01" },
+    { "key": "cust_token", "value": "" },
+    { "key": "admin_token", "value": "" },
+    { "key": "staff_token", "value": "" },
+    { "key": "bob_token", "value": "" },
+    { "key": "test_uid", "value": "5" },
+    { "key": "test_pid", "value": "4" },
+    { "key": "test_oid", "value": "1001" },
+    { "key": "test_shipid", "value": "5001" }
+  ],
+  "item": [
+    {
+      "name": "0. Khởi tạo Token (Health + Admin/Staff/Gold Login)",
+      "item": [
+        {
+          "name": "0.0 Health Check - GET /api/health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('System Health is UP (200)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.status).to.eql('UP');",
+                  "});",
+                  "pm.collectionVariables.set('test_username', 'sv_' + Date.now());"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/health"
+          }
+        },
+        {
+          "name": "0.1 Login Admin (Lấy admin_token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Admin login 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.collectionVariables.set('admin_token', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"Admin@123\"\n}" },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "0.2 Login Staff (Lấy staff_token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Staff login 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.collectionVariables.set('staff_token', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"staff\",\n  \"password\": \"Staff@123\"\n}" },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "0.3 Login Bob - Hạng Gold score=500 (Lấy bob_token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Bob (Gold) login 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.collectionVariables.set('bob_token', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"bob\",\n  \"password\": \"Pass@123\"\n}" },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Identity & Access (TC-IAM-01 -> TC-IAM-05)",
+      "item": [
+        {
+          "name": "TC-IAM-01: Đăng ký tài khoản hợp lệ (201 Created)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-IAM-01: Trả về 201 Created và uid > 0', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.uid).to.be.above(0);",
+                  "    pm.collectionVariables.set('test_uid', json.uid);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{test_username}}\",\n  \"password\": \"P@ss123\",\n  \"fullname\": \"Nguyen Van A\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/register"
+          }
+        },
+        {
+          "name": "TC-IAM-02: Đăng ký username đã tồn tại (409 Conflict)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-IAM-02: Trả về 409 Conflict khi trùng username', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{test_username}}\",\n  \"password\": \"P@ss123\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/register"
+          }
+        },
+        {
+          "name": "TC-IAM-03: Đăng ký thiếu password (400 Bad Request)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-IAM-03: Trả về 400 Bad Request khi password rỗng', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"user_no_pwd\",\n  \"password\": \"\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/register"
+          }
+        },
+        {
+          "name": "TC-IAM-04: Đăng nhập đúng thông tin (200 OK + JWT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-IAM-04: Trả về 200 OK và JWT accessToken', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.accessToken).to.be.a('string');",
+                  "    pm.collectionVariables.set('cust_token', json.accessToken);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{test_username}}\",\n  \"password\": \"P@ss123\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "TC-IAM-05: Đăng nhập sai password (401 Unauthorized)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-IAM-05: Trả về 401 Unauthorized khi sai password', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{test_username}}\",\n  \"password\": \"SaiMatKhau123\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Customer & Membership (TC-CUS-01 -> TC-CUS-05)",
+      "item": [
+        {
+          "name": "TC-CUS-01: Lấy Customer tồn tại (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-CUS-01: Trả về 200 OK và thông tin Customer', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().uid).to.eql(Number(pm.collectionVariables.get('test_uid')));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{cust_token}}" }],
+            "url": "{{baseUrl}}/api/customers/{{test_uid}}"
+          }
+        },
+        {
+          "name": "TC-CUS-02: Lấy Customer không tồn tại (404 Not Found)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-CUS-02: Trả về 404 Not Found khi uid không tồn tại', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{baseUrl}}/api/customers/999999"
+          }
+        },
+        {
+          "name": "TC-CUS-03: Cập nhật fullname Customer (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-CUS-03: Cập nhật fullname thành công (200 OK)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().fullname).to.eql('Nguyen Van A Updated');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{cust_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullname\": \"Nguyen Van A Updated\",\n  \"mid\": 2\n}"
+            },
+            "url": "{{baseUrl}}/api/customers/{{test_uid}}"
+          }
+        },
+        {
+          "name": "TC-CUS-04: Lấy thông tin Membership mname & score (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-CUS-04: Trả về mname và score (200 OK)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.mname).to.eql('Silver');",
+                  "    pm.expect(json.score).to.eql(100);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{cust_token}}" }],
+            "url": "{{baseUrl}}/api/customers/{{test_uid}}/membership"
+          }
+        },
+        {
+          "name": "TC-CUS-05: Truy vấn Customer không có token (401 Unauthorized)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-CUS-05: Không gửi JWT trả về 401 Unauthorized', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/customers/{{test_uid}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Product Catalog (TC-PRO-01 -> TC-PRO-05)",
+      "item": [
+        {
+          "name": "TC-PRO-01: Lấy danh sách Product (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-PRO-01: Trả về danh sách sản phẩm (200 OK)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().items).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{cust_token}}" }],
+            "url": "{{baseUrl}}/api/products"
+          }
+        },
+        {
+          "name": "TC-PRO-02: Lấy Product tồn tại pid=1 (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-PRO-02: Trả về thông tin Product pid=1 (200 OK)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().pid).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{cust_token}}" }],
+            "url": "{{baseUrl}}/api/products/1"
+          }
+        },
+        {
+          "name": "TC-PRO-03: Lấy Product không tồn tại (404 Not Found)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-PRO-03: Trả về 404 Not Found khi pid không tồn tại', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{cust_token}}" }],
+            "url": "{{baseUrl}}/api/products/999999"
+          }
+        },
+        {
+          "name": "TC-PRO-04: Tạo Product mới bởi Admin (201 Created)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-PRO-04: Tạo Product thành công trả 201 Created', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    var json = pm.response.json();",
+                  "    pm.collectionVariables.set('test_pid', json.pid);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pname\": \"Man hinh 4K UltraSharp\",\n  \"price\": 500,\n  \"quantity\": 15\n}"
+            },
+            "url": "{{baseUrl}}/api/products"
+          }
+        },
+        {
+          "name": "TC-PRO-05: Cập nhật tồn kho Product bởi Admin (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-PRO-05: Cập nhật quantity chính xác (200 OK)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().quantity).to.eql(30);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 30\n}"
+            },
+            "url": "{{baseUrl}}/api/products/{{test_pid}}/inventory"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Order Management (TC-ORD-01 -> TC-ORD-05)",
+      "item": [
+        {
+          "name": "TC-ORD-01: Tạo Order hợp lệ (201 Created)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-ORD-01: Tạo Order và OrderDetail thành công (201 Created)', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.oid).to.be.above(1000);",
+                  "    pm.expect(json.items.length).to.be.above(0);",
+                  "    pm.collectionVariables.set('test_oid', json.oid);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{cust_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    { \"pid\": {{test_pid}}, \"qty\": 2 }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/orders"
+          }
+        },
+        {
+          "name": "TC-ORD-02: Tạo Order không có JWT (401 Unauthorized)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-ORD-02: Trả về 401 Unauthorized khi không gửi JWT', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    { \"pid\": {{test_pid}}, \"qty\": 1 }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/orders"
+          }
+        },
+        {
+          "name": "TC-ORD-03: Đặt số lượng vượt tồn kho (409 Conflict)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-ORD-03: Vượt tồn kho trả 409 Conflict', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{cust_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    { \"pid\": {{test_pid}}, \"qty\": 99999 }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/orders"
+          }
+        },
+        {
+          "name": "TC-ORD-04: Tính discount theo score thành viên Gold=500 -> 10% (201 Created)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-ORD-04: Tính đúng discount 10% cho Gold score=500 (500 -> giảm 50, còn 450)', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.discount).to.eql(50);",
+                  "    pm.expect(json.total_amount).to.eql(450);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{bob_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    { \"pid\": {{test_pid}}, \"qty\": 1 }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/orders"
+          }
+        },
+        {
+          "name": "TC-ORD-05: Tạo Order và phát sự kiện OrderCreated vào Kafka (201 Created)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-ORD-05: Tạo Order thành công và đẩy sự kiện sang Kafka', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    var json = pm.response.json();",
+                  "    pm.collectionVariables.set('test_oid', json.oid);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{cust_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    { \"pid\": 2, \"qty\": 1 }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/orders"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Shipment (TC-SHP-01 -> TC-SHP-05)",
+      "item": [
+        {
+          "name": "TC-SHP-01: Nhận OrderCreated Event -> Shipment được tạo (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-SHP-01: Shipment tự động được tạo với status PENDING', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.oid).to.eql(Number(pm.collectionVariables.get('test_oid')));",
+                  "    pm.expect(json.status).to.eql('PENDING');",
+                  "    pm.collectionVariables.set('test_shipid', json.shipid);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{cust_token}}" }],
+            "url": "{{baseUrl}}/api/shipments/order/{{test_oid}}"
+          }
+        },
+        {
+          "name": "TC-SHP-02: Gửi Kafka Event thiếu oid -> Không tạo Shipment (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-SHP-02: Đã phát event thiếu oid vào Kafka, Shipment Consumer bỏ qua an toàn', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().published).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payload\": {\n    \"eventType\": \"OrderCreated\",\n    \"data\": {\n      \"uid\": 4\n    }\n  }\n}"
+            },
+            "url": "{{baseUrl}}/api/orders/test-kafka-event"
+          }
+        },
+        {
+          "name": "TC-SHP-03: Cập nhật trạng thái Shipment -> SHIPPING (200 OK)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-SHP-03: Trạng thái Shipment cập nhật sang SHIPPING', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().status).to.eql('SHIPPING');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{staff_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"SHIPPING\"\n}"
+            },
+            "url": "{{baseUrl}}/api/shipments/{{test_shipid}}/status"
+          }
+        },
+        {
+          "name": "TC-SHP-04: Cập nhật Shipment không tồn tại (404 Not Found)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-SHP-04: Cập nhật shipid không tồn tại trả 404 Not Found', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{staff_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"DELIVERED\"\n}"
+            },
+            "url": "{{baseUrl}}/api/shipments/999999/status"
+          }
+        },
+        {
+          "name": "TC-SHP-05 (Bước 1): Gửi trùng OrderCreated Event lần 2 vào Kafka",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-SHP-05a: Đã gửi lại cùng OrderCreated event với cùng oid vào Kafka', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payload\": {\n    \"eventType\": \"OrderCreated\",\n    \"data\": {\n      \"oid\": {{test_oid}},\n      \"uid\": {{test_uid}}\n    }\n  }\n}"
+            },
+            "url": "{{baseUrl}}/api/orders/test-kafka-event"
+          }
+        },
+        {
+          "name": "TC-SHP-05 (Bước 2): Xác minh không tạo Shipment trùng cho cùng oid",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('TC-SHP-05b: Không có Shipment trùng cho cùng oid (Idempotent Consumer)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var targetOid = Number(pm.collectionVariables.get('test_oid'));",
+                  "    var matches = pm.response.json().items.filter(function(s) { return s.oid === targetOid; });",
+                  "    pm.expect(matches.length).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{baseUrl}}/api/shipments"
+          }
+        }
+      ]
+    }
+  ]
+}
+

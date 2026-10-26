@@ -2,9 +2,9 @@ Bài tập PROMPT 3: Microservice
 
 PROMPT
 
-Thiết lập hướng dẫn mức cơ bản và diễn giải cụ thể từng bước. Sau mỗi hướng dẫn thì AI kiểm tra và đánh giá khách quan.
+Thiết lập hướng dẫn mức cơ bản và diễn giải cụ thể từng bước. Sau mỗi hướng dẫn thì AI kiểm tra và đánh giá khách quan.Tạo file log trong thư mục docs, sau mỗi bước thì cập nhật vào file.
 
-Dựa vào các tài liệu thiết kế đính kèm
+Dựa vào các tài liệu thiết kế đính kèm trong thư mục docs.
 
 Bạn là một Software Architect và Senior Backend Engineer. Hãy hướng dẫn tôi xây dựng từng bước một backend RESTful API cho hệ thống thương mại điện tử phiên bản MVP bằng Node.js theo kiến trúc Microservices, DDD và Database-per-Service.
 

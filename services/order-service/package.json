@@ -1,0 +1,17 @@
+{
+  "name": "order-service",
+  "version": "1.0.0",
+  "description": "Order Management Bounded Context Microservice (PostgreSQL + gRPC + Kafka Outbox)",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "^1.12.0",
+    "@grpc/proto-loader": "^0.7.13",
+    "dotenv": "^16.4.5",
+    "kafkajs": "^2.2.4",
+    "pg": "^8.13.1"
+  }
+}
+

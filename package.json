@@ -1,0 +1,24 @@
+{
+  "name": "ecommerce-microservices-mvp",
+  "version": "1.0.0",
+  "description": "E-commerce MVP Backend using Node.js, Microservices, DDD, Database-per-Service, gRPC, Redis, and Kafka",
+  "private": true,
+  "workspaces": [
+    "api-gateway",
+    "services/*"
+  ],
+  "scripts": {
+    "start:auth": "node services/auth-service/src/index.js",
+    "start:customer": "node services/customer-service/src/index.js",
+    "start:product": "node services/product-service/src/index.js",
+    "start:order": "node services/order-service/src/index.js",
+    "start:shipment": "node services/shipment-service/src/index.js",
+    "start:gateway": "node api-gateway/src/index.js",
+    "test:25tc": "node tests/run-25-testcases.js",
+    "test:docker": "node tests/run-25-testcases.js --live"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
+

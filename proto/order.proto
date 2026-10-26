@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package order;
+
+service OrderService {
+  rpc CreateOrder (CreateOrderRequest) returns (OrderResponse);
+  rpc GetOrder (GetOrderRequest) returns (OrderResponse);
+  rpc ListOrders (ListOrdersRequest) returns (OrderListResponse);
+  rpc PublishTestEvent (PublishTestEventRequest) returns (PublishTestEventResponse);
+  rpc HealthCheck (Empty) returns (HealthResponse);
+}
+
+message PublishTestEventRequest {
+  string key = 1;
+  string raw_json = 2;
+}
+
+message PublishTestEventResponse {
+  bool published = 1;
+  string topic = 2;
+}
+
+message Empty {}
+
+message HealthResponse {
+  string status = 1;
+  string service = 2;
+}
+
+message OrderItemRequest {
+  int32 pid = 1;
+  int32 qty = 2;
+}
+
+message CreateOrderRequest {
+  int32 uid = 1;
+  repeated OrderItemRequest items = 2;
+}
+
+message GetOrderRequest {
+  int32 oid = 1;
+}
+
+message ListOrdersRequest {
+  int32 uid = 1;
+  bool is_admin = 2;
+}
+
+message OrderDetailInfo {
+  int32 pid = 1;
+  int32 qty = 2;
+  double unit_price = 3;
+}
+
+message OrderResponse {
+  int32 oid = 1;
+  int32 uid = 2;
+  double discount = 3;
+  double total_amount = 4;
+  repeated OrderDetailInfo items = 5;
+  string status = 6;
+  string created_at = 7;
+}
+
+message OrderListResponse {
+  repeated OrderResponse items = 1;
+}
+

@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package shipment;
+
+service ShipmentService {
+  rpc GetShipment (GetShipmentRequest) returns (ShipmentResponse);
+  rpc GetShipmentByOrder (GetShipmentByOrderRequest) returns (ShipmentResponse);
+  rpc ListShipments (Empty) returns (ShipmentListResponse);
+  rpc UpdateShipmentStatus (UpdateShipmentStatusRequest) returns (ShipmentResponse);
+  rpc HealthCheck (Empty) returns (HealthResponse);
+}
+
+message Empty {}
+
+message HealthResponse {
+  string status = 1;
+  string service = 2;
+}
+
+message GetShipmentRequest {
+  int32 shipid = 1;
+}
+
+message GetShipmentByOrderRequest {
+  int32 oid = 1;
+}
+
+message UpdateShipmentStatusRequest {
+  int32 shipid = 1;
+  string status = 2;
+}
+
+message TrackingEntry {
+  string status = 1;
+  string note = 2;
+  string timestamp = 3;
+}
+
+message ShipmentResponse {
+  int32 shipid = 1;
+  int32 oid = 2;
+  int32 uid = 3;
+  string status = 4;
+  repeated TrackingEntry tracking = 5;
+}
+
+message ShipmentListResponse {
+  repeated ShipmentResponse items = 1;
+}
+
